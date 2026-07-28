@@ -11,5 +11,5 @@
 //    - anon public key    → SUPABASE_ANON_KEY 에 입력
 // ══════════════════════════════════════════════════════════════
 
-window.SUPABASE_URL      = "";   // 예: "https://abcd1234.supabase.co"
-window.SUPABASE_ANON_KEY = "";   // 예: "eyJhbGciOiJI...(긴 문자열)"
+window.SUPABASE_URL      = "https://mxdvimlijtmkzxdyxknb.supabase.co";   // 예: "https://abcd1234.supabase.co"
+window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14ZHZpbWxpanRta3p4ZHl4a25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwMzg0MDYsImV4cCI6MjEwMDYxNDQwNn0.wSlcBFJwtj7QE4QJNHXLF2UabDBzE5YvbNQ_RjkckOs";   // 예: "eyJhbGciOiJI...(긴 문자열)"
