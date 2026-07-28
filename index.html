@@ -138,7 +138,7 @@ button{font-family:inherit;}
 .side{display:flex;flex-direction:column;gap:14px;position:sticky;top:66px;}
 .widget{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
 .login{padding:14px;display:flex;flex-direction:column;gap:8px;}
-.input{border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:13.5px;background:#FFFEFB;color:var(--ink);}
+.input{border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:13.5px;background:#FFFEFB;color:var(--ink);width:100%;min-width:0;box-sizing:border-box;}
 .input:focus{outline:2px solid var(--jade);outline-offset:1px;border-color:transparent;}
 .login-btn{border:none;background:var(--jade);color:#F4EEE1;font-weight:700;font-size:14px;padding:10px;border-radius:8px;cursor:pointer;box-shadow:0 3px 0 rgba(20,66,54,.4);}
 .login-btn:hover{transform:translateY(-1px);}
@@ -211,7 +211,7 @@ button{font-family:inherit;}
 @media (max-width:940px){
   .body{grid-template-columns:1fr;}
   .side{position:static;flex-direction:row;flex-wrap:wrap;}
-  .side>.widget{flex:1 1 240px;}
+  .side>.widget{flex:1 1 240px;min-width:0;}
   .cols{grid-template-columns:1fr;}
   .gallery{grid-template-columns:repeat(2,1fr);}
 }
@@ -409,13 +409,6 @@ button{font-family:inherit;}
       <div class="widget-head head-green">SNS 연결 <span class="head-plus">+</span></div>
       <div class="sns-grid" id="snsGrid"></div>
     </div>
-
-    <div class="widget stats">
-      <div class="stat-row"><span>오늘 방문</span><b>162</b></div>
-      <div class="stat-row"><span>어제 방문</span><b>299</b></div>
-      <div class="stat-row"><span>전체 회원</span><b>1,284</b></div>
-      <div class="stat-row"><span>전체 게시물</span><b>3,910</b></div>
-    </div>
   </aside>
 </div>
 
@@ -436,7 +429,7 @@ button{font-family:inherit;}
     <span>문의하기</span><span>모바일버전</span>
     <a href="admin.html" style="margin-left:auto;color:inherit;text-decoration:none">관리자</a>
   </div>
-  <div class="footer-copy">하노이 골목 · 베트남 여행과 생활 정보를 나누는 커뮤니티 · 레이아웃 예시</div>
+  <div class="footer-copy" id="footerCopy">하노이 골목 · 베트남 여행과 생활 정보를 나누는 커뮤니티</div>
 </footer>
 
 <script>
@@ -517,7 +510,8 @@ function applyConfig(cfg){
 (function(){ try{const v=localStorage.getItem(CFG_KEY); if(v) applyConfig(JSON.parse(v));}catch(e){} })();
 // 제목 반영
 (function(){ const t=document.getElementById("siteTitle"), s=document.getElementById("siteSub");
-  if(t)t.textContent=SITE.title; if(s)s.textContent=SITE.sub; if(SITE.title)document.title=SITE.title; })();
+  if(t)t.textContent=SITE.title; if(s)s.textContent=SITE.sub; if(SITE.title)document.title=SITE.title;
+  const f=document.getElementById("footerCopy"); if(f)f.textContent=SITE.title+" · "+(SITE.sub||""); })();
 // 2) 서버 설정이 있으면 비동기로 최신본을 받아 반영(달라졌으면 새로고침)
 (async function(){
   if(!SUPABASE_URL||!SUPABASE_ANON_KEY) return;
