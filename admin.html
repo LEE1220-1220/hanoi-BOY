@@ -196,6 +196,12 @@ const GRADS=[
 const DEFAULTS={
   siteTitle:"하노이 골목",
   siteSub:"베트남 여행 · 맛집 · 교민 정보 나눔터",
+  sns:[
+    {key:"kakao", label:"카카오톡 연결",   url:""},
+    {key:"kakao", label:"카카오톡 단체방", url:""},
+    {key:"tele",  label:"텔레그램 연결",   url:""},
+    {key:"tele",  label:"텔레그램 단체방", url:""},
+  ],
   nav:[
     {label:"홈",icon:"⌂",children:[]},
     {label:"골목게시판",children:["공지사항","자유게시판","여행 꿀팁","교민 생활","여행 사진첩","맛집 추천"]},
@@ -366,7 +372,7 @@ async function startApp(){
 }
 
 // 탭
-const TABS=[["site","제목·소개"],["banners","배너"],["hero","히어로"],["nav","메뉴"],["notices","공지글"],["hot","인기글"],["gallery","사진첩"],["settings","설정"]];
+const TABS=[["site","제목·소개"],["sns","SNS 연결"],["banners","배너"],["hero","히어로"],["nav","메뉴"],["notices","공지글"],["hot","인기글"],["gallery","사진첩"],["settings","설정"]];
 function renderTabs(){
   const t=document.getElementById("tabs"); t.innerHTML="";
   TABS.forEach(([id,label])=>{ const b=document.createElement("button"); b.className="tab"+(id===curTab?" on":""); b.textContent=label; b.onclick=()=>switchTab(id); t.appendChild(b); });
@@ -450,6 +456,7 @@ document.getElementById("fileInput").addEventListener("change",async function(){
 function renderPanel(){
   const p=document.getElementById("panel");
   if(curTab==="site") return renderSite(p);
+  if(curTab==="sns") return renderSns(p);
   if(curTab==="banners") return renderList(p,{
     title:"배너 관리", desc:"가로 배너를 관리합니다. 이미지 업로드 또는 색상 중 택1 · 권장 크기 800×200px(가로로 긴 4:1). 한 페이지에 10개씩 노출.",
     arr:data.banners, addLabel:"배너 추가",
@@ -547,6 +554,27 @@ function renderList(p,cfg){
     top.appendChild(ctrlBtns(cfg.arr,i));
     row.appendChild(top); row.appendChild(cfg.body(item)); panel.appendChild(row);
   });
+  p.appendChild(panel);
+}
+
+function renderSns(p){
+  p.innerHTML="";
+  const panel=document.createElement("div"); panel.className="panel";
+  panel.innerHTML=`<div class="panel-head"><div><h2>SNS 연결</h2><p>카카오톡·텔레그램 버튼의 이름과 링크를 설정합니다. 링크를 비워두면 그 버튼은 회색(비활성)으로 표시됩니다.</p></div></div>`;
+  if(!Array.isArray(data.sns)) data.sns=clone(DEFAULTS.sns);
+  data.sns.forEach((s,i)=>{
+    const card=document.createElement("div"); card.className="row"; card.style.marginBottom="10px";
+    const badge = s.key==="tele" ? `<span style="background:#2AABEE;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">텔레그램</span>` : `<span style="background:#FEE500;color:#3C1E1E;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">카카오톡</span>`;
+    const head=document.createElement("div"); head.style.cssText="margin-bottom:8px;"; head.innerHTML=badge;
+    card.appendChild(head);
+    card.appendChild(field("버튼 이름",s.label,v=>{s.label=v;markDirty();}));
+    const urlF=field("연결 링크(URL)",s.url,v=>{s.url=v.trim();markDirty();}); urlF.style.marginTop="8px";
+    card.appendChild(urlF);
+    panel.appendChild(card);
+  });
+  const tip=document.createElement("p"); tip.style.cssText="font-size:11.5px;color:#9C9384;margin-top:4px;line-height:1.6;";
+  tip.innerHTML="※ 오픈채팅/채널 링크를 그대로 붙여넣으세요. 예: 카카오 오픈채팅 <code>https://open.kakao.com/o/xxxx</code> · 텔레그램 <code>https://t.me/xxxx</code>";
+  panel.appendChild(tip);
   p.appendChild(panel);
 }
 
