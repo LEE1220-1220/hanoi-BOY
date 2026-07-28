@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>하노이 골목 · 관리자</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+:root{
+  --paper:#F4EEE1; --card:#FFFDF8; --ink:#241F18; --muted:#6E655A; --line:#E6DCC9;
+  --jade:#1E5E4E; --jade-dk:#164A3D; --jade-soft:#E7F0EA; --orange:#D98026; --red:#B23B4E;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--paper);line-height:1.55;-webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font-family:inherit;}
+
+.top{background:var(--jade-dk);color:#EAF3EE;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;}
+.top-l{display:flex;align-items:center;gap:12px;}
+.top-mark{width:38px;height:38px;border-radius:10px;background:var(--jade);color:#F4EEE1;font-family:'Gowun Batang',serif;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.top-title{font-family:'Gowun Batang',serif;font-weight:700;font-size:18px;}
+.top-title small{display:block;font-family:'Noto Sans KR';font-weight:400;font-size:11px;opacity:.8;}
+.top-r{display:flex;gap:8px;align-items:center;}
+.top-btn{border:1px solid rgba(255,255,255,.25);background:transparent;color:#EAF3EE;font-size:13px;font-weight:500;padding:7px 13px;border-radius:8px;cursor:pointer;text-decoration:none;}
+.top-btn:hover{background:rgba(255,255,255,.1);}
+
+.wrap{max-width:920px;margin:0 auto;padding:20px 18px 120px;}
+.warn{background:#FBF1E0;border:1px solid #EAD6AE;color:#7A5B1E;font-size:12.5px;border-radius:10px;padding:11px 14px;margin-bottom:14px;}
+.srcbar{font-size:12px;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;}
+.pill.local{background:#EDE3CF;color:#6E5A2E;}
+.pill.cloud{background:var(--jade-soft);color:var(--jade);}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--muted);font-weight:700;font-size:14px;padding:9px 16px;border-radius:999px;cursor:pointer;}
+.tab.on{background:var(--jade);border-color:var(--jade);color:#fff;}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;}
+.panel-head h2{margin:0;font-family:'Gowun Batang',serif;font-size:20px;}
+.panel-head p{margin:2px 0 0;font-size:12.5px;color:var(--muted);}
+.addbtn{border:none;background:var(--jade);color:#fff;font-weight:700;font-size:13.5px;padding:9px 15px;border-radius:8px;cursor:pointer;white-space:nowrap;}
+.addbtn:hover{opacity:.92;}
+
+.row{border:1px solid var(--line);border-radius:11px;padding:13px;margin-bottom:11px;background:#FFFEFB;}
+.row-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.swatch{width:40px;height:40px;border-radius:8px;flex:none;box-shadow:inset 0 0 12px rgba(0,0,0,.12);background-size:cover;background-position:center;}
+.row-idx{font-size:12px;color:var(--muted);font-weight:700;}
+.row-ctrls{margin-left:auto;display:flex;gap:5px;}
+.ic{border:1px solid var(--line);background:var(--card);color:var(--muted);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.ic:hover{border-color:var(--jade);color:var(--jade);}
+.ic.del:hover{border-color:var(--red);color:var(--red);}
+.ic:disabled{opacity:.35;cursor:default;}
+.grid{display:grid;gap:9px;}
+.g2{grid-template-columns:1fr 1fr;}
+.fld{display:flex;flex-direction:column;gap:4px;}
+.fld label{font-size:11px;font-weight:700;color:var(--muted);}
+.fld input,.fld select,.fld textarea{border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:13.5px;background:#fff;color:var(--ink);width:100%;}
+.fld textarea{resize:vertical;min-height:38px;}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:2px solid var(--jade);outline-offset:1px;border-color:transparent;}
+
+/* 이미지 컨트롤 */
+.img-box{display:flex;gap:12px;align-items:center;margin-top:9px;padding-top:11px;border-top:1px dashed var(--line);}
+.img-prev{width:104px;height:58px;border-radius:8px;flex:none;background-size:cover;background-position:center;box-shadow:inset 0 0 10px rgba(0,0,0,.15);position:relative;}
+.img-prev .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,.9);text-shadow:0 1px 2px rgba(0,0,0,.5);}
+.img-actions{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;}
+.img-urlrow{display:flex;gap:6px;}
+.img-urlrow input{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;min-width:0;}
+.img-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.mini{border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:12px;font-weight:700;padding:7px 11px;border-radius:7px;cursor:pointer;}
+.mini:hover{border-color:var(--jade);color:var(--jade);}
+.mini.rm:hover{border-color:var(--red);color:var(--red);}
+
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F1E9D8;gap:14px;}
+.set-row:last-child{border-bottom:none;}
+.set-row .k{font-weight:700;font-size:14px;}
+.set-row .k small{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px;}
+.switch{position:relative;width:46px;height:26px;flex:none;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:#CFC6B4;border-radius:999px;cursor:pointer;transition:.2s;}
+.slider::before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.switch input:checked+.slider{background:var(--jade);}
+.switch input:checked+.slider::before{transform:translateX(20px);}
+.num{width:90px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;}
+.pw-row{display:flex;gap:8px;flex-wrap:wrap;}
+.pw-row input{flex:1;min-width:140px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13.5px;}
+.smallbtn{border:1px solid var(--jade);background:transparent;color:var(--jade);font-weight:700;font-size:13px;padding:9px 14px;border-radius:8px;cursor:pointer;}
+.smallbtn:hover{background:var(--jade);color:#fff;}
+.codebox{background:#23201B;color:#DCE9E2;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.6;padding:12px 14px;border-radius:10px;overflow:auto;white-space:pre;margin-top:8px;}
+
+.savebar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,253,248,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 18px;z-index:30;}
+.savebar-in{max-width:920px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.dirty{font-size:12.5px;color:var(--muted);}
+.dirty.on{color:var(--orange);font-weight:700;}
+.save-actions{display:flex;gap:8px;}
+.save-btn{border:none;background:var(--jade);color:#fff;font-weight:700;font-size:14.5px;padding:11px 22px;border-radius:9px;cursor:pointer;box-shadow:0 3px 0 rgba(20,66,54,.4);}
+.save-btn:hover{transform:translateY(-1px);}
+.save-btn:disabled{opacity:.6;cursor:default;transform:none;}
+.ghost{border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:500;font-size:13.5px;padding:11px 16px;border-radius:9px;cursor:pointer;}
+.ghost:hover{border-color:var(--red);color:var(--red);}
+
+.gate{position:fixed;inset:0;background:var(--paper);display:flex;align-items:center;justify-content:center;z-index:50;padding:18px;}
+.gate-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px 26px;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 50px -20px rgba(0,0,0,.35);}
+.gate-mark{width:52px;height:52px;border-radius:13px;background:var(--jade);color:#F4EEE1;font-family:'Gowun Batang',serif;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.gate-card h1{font-family:'Gowun Batang',serif;font-size:21px;margin:0 0 4px;}
+.gate-card p{font-size:12.5px;color:var(--muted);margin:0 0 18px;}
+.gate-card input{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-size:14px;margin-bottom:10px;}
+.gate-card input:focus{outline:2px solid var(--jade);outline-offset:1px;border-color:transparent;}
+.gate-card button{width:100%;border:none;background:var(--jade);color:#fff;font-weight:700;font-size:15px;padding:12px;border-radius:9px;cursor:pointer;}
+.gate-err{color:var(--red);font-size:12.5px;min-height:16px;margin-bottom:6px;}
+.gate-hint{font-size:11.5px;color:#9C9384;margin-top:12px;}
+
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%) translateY(20px);background:var(--jade-dk);color:#EAF3EE;font-size:13.5px;padding:11px 20px;border-radius:999px;box-shadow:0 8px 24px -8px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90%;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media (max-width:560px){ .g2{grid-template-columns:1fr;} .top-title small{display:none;} .img-box{flex-direction:column;align-items:stretch;} .img-prev{width:100%;height:120px;} }
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-mark">골목</div>
+    <h1>관리자 로그인</h1>
+    <p>관리자 비밀번호를 입력하세요.</p>
+    <div class="gate-err" id="gateErr"></div>
+    <input id="gatePw" type="password" placeholder="관리자 비밀번호 (1220)" autocomplete="off" />
+    <div id="gateSb" style="display:none">
+      <input id="gateEmail" type="email" placeholder="Supabase 관리자 이메일" autocomplete="username" />
+      <input id="gateSbPw" type="password" placeholder="Supabase 관리자 비밀번호" autocomplete="current-password" />
+    </div>
+    <button id="gateBtn">로그인</button>
+    <div class="gate-hint" id="gateHint">관리자 전용 페이지입니다. 비밀번호는 개발자만 코드에서 변경할 수 있습니다.</div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="top">
+    <div class="top-l">
+      <div class="top-mark">골목</div>
+      <div class="top-title">관리자 페이지<small>하노이 골목</small></div>
+    </div>
+    <div class="top-r">
+      <a class="top-btn" href="index.html" target="_blank">메인 보기 ↗</a>
+      <button class="top-btn" id="logout">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="warn" id="warnBox"></div>
+    <div class="srcbar">저장 위치: <span class="pill" id="srcPill"></span> <span id="srcText"></span></div>
+
+    <div class="tabs" id="tabs"></div>
+    <div id="panel"></div>
+  </div>
+
+  <div class="savebar">
+    <div class="savebar-in">
+      <span class="dirty" id="dirty">저장된 상태</span>
+      <div class="save-actions">
+        <button class="ghost" id="resetBtn">기본값으로 되돌리기</button>
+        <button class="save-btn" id="saveBtn">변경사항 저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" style="display:none" />
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  서버 연동 설정 — Supabase를 쓰려면 아래 두 값을 채우세요.
+//  비워두면 이 브라우저 저장소(localStorage)만 사용합니다.
+//  index.html 상단의 값과 반드시 동일하게 맞추세요.
+// ══════════════════════════════════════════════════════════
+const SUPABASE_URL      = (window.SUPABASE_URL||"").trim();  // config.js에서 설정
+const SUPABASE_ANON_KEY = (window.SUPABASE_ANON_KEY||"").trim();
+
+const GRADS=[
+  {label:"제이드",v:"linear-gradient(120deg,#1E5E4E,#3E8E6E)"},
+  {label:"블루",v:"linear-gradient(120deg,#2A6F97,#68B0C9)"},
+  {label:"오렌지",v:"linear-gradient(120deg,#B4552B,#E0A244)"},
+  {label:"머스타드",v:"linear-gradient(120deg,#8A6D1F,#D6B24A)"},
+  {label:"민트",v:"linear-gradient(120deg,#356B5B,#7FB49E)"},
+  {label:"올리브",v:"linear-gradient(120deg,#4A6D2A,#8FB760)"},
+  {label:"틸",v:"linear-gradient(120deg,#1E5E4E,#57937E)"},
+  {label:"스카이",v:"linear-gradient(120deg,#2A6F97,#5E9BB8)"},
+  {label:"로즈",v:"linear-gradient(120deg,#A33B4E,#D4788A)"},
+  {label:"바이올렛",v:"linear-gradient(120deg,#5A4A8A,#8E7CC3)"},
+  {label:"카멜",v:"linear-gradient(120deg,#B06A2B,#E0A55A)"},
+];
+
+const DEFAULTS={
+  siteTitle:"하노이 골목",
+  siteSub:"베트남 여행 · 맛집 · 교민 정보 나눔터",
+  nav:[
+    {label:"홈",icon:"⌂",children:[]},
+    {label:"골목게시판",children:["공지사항","자유게시판","여행 꿀팁","교민 생활","여행 사진첩","맛집 추천"]},
+    {label:"하노이",children:["명소·관광","맛집·카페","숙소·호텔","교통·이동"]},
+    {label:"호치민",children:["명소·관광","맛집·카페","숙소·호텔","교통·이동"]},
+    {label:"다낭",children:["명소·관광","맛집·카페","숙소·호텔","교통·이동"]},
+    {label:"나트랑",children:["명소·관광","맛집·카페","숙소·호텔","교통·이동"]},
+    {label:"정보게시판",children:["구인·구직","장터·나눔"]},
+  ],
+  hero:[
+    {title:"베트남 여행, 골목에서 시작하세요",sub:"하노이 · 호치민 · 다낭 · 나트랑 실전 정보",g:"linear-gradient(120deg,#1E5E4E,#2A6F97)",img:""},
+    {title:"현지인이 인정한 진짜 맛집",sub:"교민·여행자가 직접 남긴 후기",g:"linear-gradient(120deg,#B4552B,#E0A244)",img:""},
+    {title:"안전하고 즐거운 여행 가이드",sub:"교통 · 환전 · 유심 · 비자 한눈에",g:"linear-gradient(120deg,#356B5B,#8A6D1F)",img:""},
+  ],
+  banners:[
+    {name:"베트남 여행사 · 패키지 예약",sub:"하노이·다낭·나트랑 자유일정",url:"https://example.com",g:"linear-gradient(120deg,#1E5E4E,#3E8E6E)",img:""},
+    {name:"공항 픽업 & 그랩 안내",sub:"노이바이·떤선녓 24시간",url:"https://example.com",g:"linear-gradient(120deg,#2A6F97,#68B0C9)",img:""},
+    {name:"베트남 유심 · 이심",sub:"도착 즉시 데이터 개통",url:"https://example.com",g:"linear-gradient(120deg,#B4552B,#E0A244)",img:""},
+    {name:"환전 · 송금 정보",sub:"우대율 좋은 곳 모음",url:"https://example.com",g:"linear-gradient(120deg,#8A6D1F,#D6B24A)",img:""},
+    {name:"호텔 · 리조트 예약",sub:"교민 추천 숙소",url:"https://example.com",g:"linear-gradient(120deg,#356B5B,#7FB49E)",img:""},
+    {name:"한인 식당 · 마트",sub:"하노이 미딩·까우저이",url:"https://example.com",g:"linear-gradient(120deg,#4A6D2A,#8FB760)",img:""},
+    {name:"골프 · 라운딩 모임",sub:"주말 부킹 안내",url:"https://example.com",g:"linear-gradient(120deg,#1E5E4E,#57937E)",img:""},
+    {name:"국제학교 · 교육 상담",sub:"입학 정보 안내",url:"https://example.com",g:"linear-gradient(120deg,#2A6F97,#5E9BB8)",img:""},
+    {name:"병원 · 통역 서비스",sub:"응급·건강검진",url:"https://example.com",g:"linear-gradient(120deg,#A33B4E,#D4788A)",img:""},
+    {name:"부동산 · 장기 임대",sub:"아파트·오피스텔",url:"https://example.com",g:"linear-gradient(120deg,#5A4A8A,#8E7CC3)",img:""},
+    {name:"비자 · 행정 대행",sub:"거주증·노동허가",url:"https://example.com",g:"linear-gradient(120deg,#B06A2B,#E0A55A)",img:""},
+    {name:"렌터카 · 차량 대여",sub:"단기·장기 예약",url:"https://example.com",g:"linear-gradient(120deg,#2E6B5E,#6FAE9C)",img:""},
+  ],
+  settings:{autoRotate:true,rotateSec:20},
+  hot:[
+    {t:"하노이 노이바이 공항 → 시내 이동 총정리",b:"여행 꿀팁",v:412},
+    {t:"구시가지 쌀국수 3대장, 현지인 줄서는 집",b:"맛집 추천",v:356},
+    {t:"장기 거주 집 구하기 & 계약 주의점",b:"교민 생활",v:289},
+    {t:"유심 vs 이심 vs 로밍, 뭐가 나을까",b:"여행 꿀팁",v:401},
+  ],
+  notices:[
+    {t:"커뮤니티 이용 규칙 안내",d:"07-18"},
+    {t:"여행 사진첩 이용 방법",d:"07-10"},
+    {t:"맛집 추천 작성 가이드",d:"07-02"},
+  ],
+  gallery:[
+    {t:"호안끼엠 호수의 저녁",tag:"하노이",g:"linear-gradient(135deg,#1E5E4E,#3E8E6E)",img:""},
+    {t:"미케 해변 일출",tag:"다낭",g:"linear-gradient(135deg,#2A6F97,#68B0C9)",img:""},
+    {t:"구시가지 야시장",tag:"하노이",g:"linear-gradient(135deg,#B4552B,#E0A244)",img:""},
+    {t:"쌀국수 한 그릇",tag:"맛집",g:"linear-gradient(135deg,#8A6D1F,#D6B24A)",img:""},
+    {t:"바나힐 골든브리지",tag:"다낭",g:"linear-gradient(135deg,#4A6D2A,#8FB760)",img:""},
+    {t:"분짜와 넴",tag:"맛집",g:"linear-gradient(135deg,#A33B4E,#D4788A)",img:""},
+    {t:"메콩강 보트투어",tag:"호치민",g:"linear-gradient(135deg,#1E5E4E,#57937E)",img:""},
+    {t:"닌빈 땀꼭 풍경",tag:"닌빈",g:"linear-gradient(135deg,#356B5B,#7FB49E)",img:""},
+  ],
+};
+
+const clone=o=>JSON.parse(JSON.stringify(o));
+const hasCloud=!!(SUPABASE_URL&&SUPABASE_ANON_KEY);
+// 관리자가 Supabase에 로그인하면 받는 토큰(있으면 설정 저장 권한이 생김)
+let SB_TOKEN=null;
+const sbHeaders=(auth)=>({apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+((auth&&SB_TOKEN)?SB_TOKEN:SUPABASE_ANON_KEY)});
+
+// Supabase Auth: 이메일+비밀번호로 로그인 → 액세스 토큰 획득
+async function sbSignIn(email,password){
+  const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{
+    method:"POST", headers:{apikey:SUPABASE_ANON_KEY,"Content-Type":"application/json"},
+    body:JSON.stringify({email,password})
+  });
+  if(!r.ok) return null;
+  const d=await r.json(); return d.access_token||null;
+}
+
+// Supabase Storage: 이미지 파일 업로드 → 공개 URL 반환 (images 버킷)
+async function sbUploadImage(file){
+  const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
+  const path="banners/"+Date.now()+"_"+Math.floor(Math.random()*99999)+"."+ext;
+  const r=await fetch(SUPABASE_URL+"/storage/v1/object/images/"+path,{
+    method:"POST",
+    headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+(SB_TOKEN||SUPABASE_ANON_KEY),"Content-Type":file.type||"image/jpeg","x-upsert":"true"},
+    body:file
+  });
+  if(!r.ok) return null;
+  return SUPABASE_URL+"/storage/v1/object/public/images/"+path;
+}
+
+async function dbLoad(){
+  if(hasCloud){
+    try{
+      const r=await fetch(SUPABASE_URL+"/rest/v1/hg_site?id=eq.1&select=config",{headers:sbHeaders()});
+      if(r.ok){ const rows=await r.json(); if(rows&&rows[0]&&rows[0].config) return {config:rows[0].config,source:"cloud"}; }
+    }catch(e){ console.warn("cloud load fail",e); }
+  }
+  try{const v=localStorage.getItem("hg_config"); if(v) return {config:JSON.parse(v),source:"local"};}catch(e){}
+  return {config:null,source:"default"};
+}
+async function dbSave(config){
+  try{localStorage.setItem("hg_config",JSON.stringify(config));}catch(e){}
+  if(hasCloud){
+    if(!SB_TOKEN) return {ok:false,cloud:true,noauth:true};
+    try{
+      const r=await fetch(SUPABASE_URL+"/rest/v1/hg_site",{
+        method:"POST",
+        headers:Object.assign(sbHeaders(true),{"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"}),
+        body:JSON.stringify({id:1,config})
+      });
+      return {ok:r.ok,cloud:true,status:r.status};
+    }catch(e){ return {ok:false,cloud:true,err:e}; }
+  }
+  return {ok:true,cloud:false};
+}
+
+// 상태
+let data=clone(DEFAULTS);
+let dirty=false, curTab="banners", pendingFile=null; // pendingFile: 업로드 대상 아이템
+
+function markDirty(){ dirty=true; updateDirty(); }
+function updateDirty(){ const d=document.getElementById("dirty"); d.textContent=dirty?"● 저장되지 않은 변경사항":"저장된 상태"; d.classList.toggle("on",dirty); }
+const toastEl=document.getElementById("toast"); let tT=null;
+function toast(m){ toastEl.textContent=m; toastEl.classList.add("show"); clearTimeout(tT); tT=setTimeout(()=>toastEl.classList.remove("show"),2800); }
+
+// 로그인
+// ══════════════════════════════════════════════════════════
+//  관리자 비밀번호 — 개발자만 이 값을 수정할 수 있습니다.
+//  (앱 화면에서는 변경할 수 없고, 이 파일의 코드를 직접 고쳐야 변경됩니다.)
+// ══════════════════════════════════════════════════════════
+const ADMIN_PW = "1220";
+const SESS="hg_admin_ok";
+const getPw=()=>ADMIN_PW;
+// 클라우드 연결 시: Supabase 관리자 로그인 칸을 보여줌
+if(hasCloud){
+  document.getElementById("gateSb").style.display="block";
+  document.getElementById("gateHint").innerHTML="① 관리자 비밀번호(1220) + ② Supabase 관리자 계정으로 로그인하면 설정 저장이 가능합니다.<br>(Supabase 계정은 대시보드 Authentication → Users 에서 만드세요)";
+}
+document.getElementById("gateBtn").onclick=tryLogin;
+["gatePw","gateEmail","gateSbPw"].forEach(id=>{ const e=document.getElementById(id); if(e)e.addEventListener("keydown",ev=>{ if(ev.key==="Enter") tryLogin(); }); });
+async function tryLogin(){
+  const err=document.getElementById("gateErr");
+  if(document.getElementById("gatePw").value!==getPw()){ err.textContent="관리자 비밀번호가 올바르지 않습니다."; return; }
+  if(hasCloud){
+    const email=document.getElementById("gateEmail").value.trim();
+    const pw=document.getElementById("gateSbPw").value;
+    if(!email||!pw){ err.textContent="Supabase 관리자 이메일과 비밀번호를 입력하세요."; return; }
+    const btn=document.getElementById("gateBtn"); btn.disabled=true; btn.textContent="로그인 중…";
+    SB_TOKEN=await sbSignIn(email,pw);
+    btn.disabled=false; btn.textContent="로그인";
+    if(!SB_TOKEN){ err.textContent="Supabase 로그인 실패 — 이메일·비밀번호를 확인하세요."; return; }
+  }
+  sessionStorage.setItem(SESS,"1"); startApp();
+}
+document.getElementById("logout").onclick=()=>{ sessionStorage.removeItem(SESS); SB_TOKEN=null; location.reload(); };
+// 클라우드 모드에서는 새로고침 시 토큰이 없으므로 매번 다시 로그인 (로컬 모드는 세션 유지)
+if(!hasCloud && sessionStorage.getItem(SESS)==="1"){ startApp(); }
+
+async function startApp(){
+  document.getElementById("gate").style.display="none";
+  document.getElementById("app").style.display="block";
+  const loaded=await dbLoad();
+  data=clone(DEFAULTS);
+  if(loaded.config) for(const k in DEFAULTS){ if(loaded.config[k]!=null) data[k]=loaded.config[k]; }
+  // 서버 미설정 시 예전 개별 키가 있으면 흡수(하위호환)
+  if(!loaded.config){ ["banners","settings","hot","notices","gallery"].forEach(k=>{ try{const v=localStorage.getItem("hg_"+k); if(v) data[k]=JSON.parse(v);}catch(e){} }); }
+  // 메뉴 하위 항목(게시판)을 {id,label}로 정규화 — id는 글 데이터 연결용
+  (data.nav||[]).forEach((n,gi)=>{ n.children=(n.children||[]).map((c,ci)=> (c&&typeof c==="object")?{id:c.id||("b_"+gi+"_"+ci),label:c.label}:{id:"b_"+gi+"_"+ci,label:c}); });
+  // 저장 위치 표시
+  const pill=document.getElementById("srcPill"), st=document.getElementById("srcText");
+  if(hasCloud){ pill.className="pill cloud"; pill.textContent="Supabase(클라우드)"; st.textContent="모든 방문자에게 반영됩니다."; }
+  else{ pill.className="pill local"; pill.textContent="이 브라우저"; st.textContent="변경 내용이 이 브라우저에만 저장됩니다."; }
+  document.getElementById("warnBox").innerHTML = hasCloud
+    ? "☁️ Supabase가 연결되어 있습니다. 저장하면 모든 방문자에게 반영됩니다."
+    : "⚠️ 서버가 아직 연결되지 않았습니다. 지금은 변경 내용이 <b>이 브라우저에만</b> 저장됩니다. 모든 방문자에게 반영하려면 설정 탭의 안내대로 Supabase를 연결하세요.";
+  renderTabs(); switchTab("site"); updateDirty();
+}
+
+// 탭
+const TABS=[["site","제목·소개"],["banners","배너"],["hero","히어로"],["nav","메뉴"],["notices","공지글"],["hot","인기글"],["gallery","사진첩"],["settings","설정"]];
+function renderTabs(){
+  const t=document.getElementById("tabs"); t.innerHTML="";
+  TABS.forEach(([id,label])=>{ const b=document.createElement("button"); b.className="tab"+(id===curTab?" on":""); b.textContent=label; b.onclick=()=>switchTab(id); t.appendChild(b); });
+}
+function switchTab(id){ curTab=id; renderTabs(); renderPanel(); }
+
+// 공통 위젯
+function gradSelect(val,onChange){
+  const s=document.createElement("select");
+  GRADS.forEach(g=>{ const o=document.createElement("option"); o.value=g.v; o.textContent=g.label; if(g.v===val)o.selected=true; s.appendChild(o); });
+  if(!GRADS.some(g=>g.v===val)){ const o=document.createElement("option"); o.value=val; o.textContent="현재 색상"; o.selected=true; s.appendChild(o); }
+  s.onchange=()=>onChange(s.value); return s;
+}
+function ctrlBtns(arr,i){
+  const wrap=document.createElement("div"); wrap.className="row-ctrls";
+  const up=document.createElement("button"); up.className="ic"; up.textContent="↑"; up.disabled=i===0;
+  up.onclick=()=>{ [arr[i-1],arr[i]]=[arr[i],arr[i-1]]; markDirty(); renderPanel(); };
+  const dn=document.createElement("button"); dn.className="ic"; dn.textContent="↓"; dn.disabled=i===arr.length-1;
+  dn.onclick=()=>{ [arr[i+1],arr[i]]=[arr[i],arr[i+1]]; markDirty(); renderPanel(); };
+  const del=document.createElement("button"); del.className="ic del"; del.textContent="✕";
+  del.onclick=()=>{ if(confirm("이 항목을 삭제할까요?")){ arr.splice(i,1); markDirty(); renderPanel(); } };
+  wrap.append(up,dn,del); return wrap;
+}
+function field(label,val,onInput,type){
+  const f=document.createElement("div"); f.className="fld";
+  const l=document.createElement("label"); l.textContent=label;
+  const inp=document.createElement("input"); inp.value=val==null?"":val; if(type)inp.type=type;
+  inp.oninput=()=>onInput(type==="number"?(+inp.value||0):inp.value);
+  f.append(l,inp); return f;
+}
+function textareaField(label,val,onInput){
+  const f=document.createElement("div"); f.className="fld";
+  const l=document.createElement("label"); l.textContent=label;
+  const ta=document.createElement("textarea"); ta.value=val||""; ta.oninput=()=>onInput(ta.value);
+  f.append(l,ta); return f;
+}
+
+// 이미지 컨트롤 (배너/사진첩 공용)
+function imageControl(item, sizeHint){
+  const box=document.createElement("div"); box.className="img-box";
+  const prev=document.createElement("div"); prev.className="img-prev";
+  if(item.img){ prev.style.backgroundImage=`url('${item.img}')`; }
+  else{ prev.style.background=item.g; prev.innerHTML=`<span class="ph">이미지 없음(색상)</span>`; }
+  const actions=document.createElement("div"); actions.className="img-actions";
+  const urlrow=document.createElement("div"); urlrow.className="img-urlrow";
+  const urlInp=document.createElement("input"); urlInp.placeholder="이미지 주소(URL) 붙여넣기"; urlInp.value=item.img&&/^https?:/.test(item.img)?item.img:"";
+  const urlBtn=document.createElement("button"); urlBtn.className="mini"; urlBtn.textContent="적용";
+  urlBtn.onclick=()=>{ item.img=urlInp.value.trim(); markDirty(); renderPanel(); };
+  urlrow.append(urlInp,urlBtn);
+  const btns=document.createElement("div"); btns.className="img-btns";
+  const fileBtn=document.createElement("button"); fileBtn.className="mini"; fileBtn.textContent="파일 업로드";
+  fileBtn.onclick=()=>{ pendingFile=item; document.getElementById("fileInput").click(); };
+  const rmBtn=document.createElement("button"); rmBtn.className="mini rm"; rmBtn.textContent="이미지 제거"; rmBtn.disabled=!item.img;
+  rmBtn.onclick=()=>{ item.img=""; markDirty(); renderPanel(); };
+  btns.append(fileBtn,rmBtn);
+  const hint=document.createElement("div"); hint.style.cssText="font-size:11px;color:#9C9384;";
+  hint.innerHTML=(sizeHint?`<b style="color:var(--jade)">권장 크기 ${sizeHint}</b> · `:"")+"이미지가 있으면 색상 대신 이미지가 보입니다. 파일은 500KB 이하 권장.";
+  actions.append(urlrow,btns,hint);
+  box.append(prev,actions); return box;
+}
+// 파일 업로드 처리 (클라우드: Storage 업로드 → URL / 로컬: base64)
+document.getElementById("fileInput").addEventListener("change",async function(){
+  const file=this.files&&this.files[0]; this.value="";
+  if(!file||!pendingFile) return;
+  const target=pendingFile; pendingFile=null;
+  if(hasCloud){
+    if(file.size>5000000){ toast("이미지가 너무 큽니다(5MB 초과)."); return; }
+    toast("이미지 업로드 중…");
+    const url=await sbUploadImage(file);
+    if(url){ target.img=url; markDirty(); renderPanel(); toast("이미지가 업로드되었습니다."); }
+    else{ toast("업로드 실패 — Storage에 public 'images' 버킷이 있는지, 로그인했는지 확인하세요."); }
+  }else{
+    if(file.size>1200000){ toast("이미지가 너무 큽니다(1.2MB 초과). 더 작은 파일을 사용하거나 서버를 연결하세요."); return; }
+    const rd=new FileReader();
+    rd.onload=()=>{ target.img=rd.result; markDirty(); renderPanel(); toast("이미지가 적용되었습니다."); };
+    rd.readAsDataURL(file);
+  }
+});
+
+// 패널
+function renderPanel(){
+  const p=document.getElementById("panel");
+  if(curTab==="site") return renderSite(p);
+  if(curTab==="banners") return renderList(p,{
+    title:"배너 관리", desc:"가로 배너를 관리합니다. 이미지 업로드 또는 색상 중 택1 · 권장 크기 800×200px(가로로 긴 4:1). 한 페이지에 10개씩 노출.",
+    arr:data.banners, addLabel:"배너 추가",
+    make:()=>({name:"새 배너",sub:"설명을 입력하세요",url:"https://",g:GRADS[0].v,img:""}),
+    swatch:b=>b.img?`background-image:url('${b.img}')`:`background:${b.g}`,
+    body:b=>{ const body=document.createElement("div");
+      const g=document.createElement("div"); g.className="grid g2";
+      g.append(field("제목",b.name,v=>{b.name=v;markDirty();}), field("설명",b.sub,v=>{b.sub=v;markDirty();}));
+      const g2=document.createElement("div"); g2.className="grid g2"; g2.style.marginTop="9px";
+      const colF=document.createElement("div"); colF.className="fld";
+      colF.innerHTML=`<label>색상(이미지 없을 때)</label>`; colF.appendChild(gradSelect(b.g,v=>{b.g=v;markDirty();renderPanel();}));
+      g2.append(field("이동 주소(URL)",b.url,v=>{b.url=v;markDirty();}), colF);
+      body.append(g,g2,imageControl(b,"800×200px (가로로 긴 4:1)")); return body; },
+  });
+  if(curTab==="hero") return renderList(p,{
+    title:"히어로 배너 관리", desc:"메인 상단 큰 배너입니다. 이미지 또는 색상 · 권장 크기 1200×300px(가로로 긴 4:1). 새로고침마다 순서가 랜덤으로 바뀝니다.",
+    arr:data.hero, addLabel:"문구 추가",
+    make:()=>({title:"새 문구",sub:"부제목",g:GRADS[0].v,img:""}),
+    swatch:h=>h.img?`background-image:url('${h.img}')`:`background:${h.g}`,
+    body:h=>{ const body=document.createElement("div");
+      body.append(field("제목",h.title,v=>{h.title=v;markDirty();}));
+      const g=document.createElement("div"); g.className="grid g2"; g.style.marginTop="9px";
+      const colF=document.createElement("div"); colF.className="fld"; colF.innerHTML=`<label>배경 색상(이미지 없을 때)</label>`;
+      colF.appendChild(gradSelect(h.g,v=>{h.g=v;markDirty();renderPanel();}));
+      g.append(field("부제목",h.sub,v=>{h.sub=v;markDirty();}), colF);
+      body.append(g,imageControl(h,"1200×300px (가로로 긴 4:1)")); return body; },
+  });
+  if(curTab==="nav") return renderList(p,{
+    title:"메뉴 · 게시판 관리", desc:"상단 메뉴 이름과 그 아래 게시판을 편집합니다. 게시판은 추가·이름수정·순서변경·삭제할 수 있고, 메인에서 클릭하면 글 목록이 열립니다.",
+    arr:data.nav, addLabel:"메뉴 추가",
+    make:()=>({label:"새 메뉴",children:[{id:"b_"+Date.now()+Math.floor(Math.random()*99999),label:"새 게시판"}]}),
+    swatch:()=>null,
+    body:n=>{ const body=document.createElement("div");
+      body.append(field("메뉴 이름",n.label,v=>{n.label=v;markDirty();}));
+      const sub=document.createElement("div"); sub.style.marginTop="11px";
+      const lbl=document.createElement("div"); lbl.style.cssText="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;"; lbl.textContent="게시판 (하위 메뉴)";
+      sub.appendChild(lbl);
+      (n.children||[]).forEach((c,ci)=>{
+        const rowc=document.createElement("div"); rowc.style.cssText="display:flex;gap:6px;margin-bottom:6px;align-items:center;";
+        const inp=document.createElement("input"); inp.value=c.label; inp.style.cssText="flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px;";
+        inp.oninput=()=>{ c.label=inp.value; markDirty(); };
+        const up=document.createElement("button"); up.className="ic"; up.textContent="↑"; up.disabled=ci===0; up.onclick=()=>{ [n.children[ci-1],n.children[ci]]=[n.children[ci],n.children[ci-1]]; markDirty(); renderPanel(); };
+        const dn=document.createElement("button"); dn.className="ic"; dn.textContent="↓"; dn.disabled=ci===n.children.length-1; dn.onclick=()=>{ [n.children[ci+1],n.children[ci]]=[n.children[ci],n.children[ci+1]]; markDirty(); renderPanel(); };
+        const del=document.createElement("button"); del.className="ic del"; del.textContent="✕"; del.onclick=()=>{ if(confirm("이 게시판을 삭제할까요? (작성된 글은 남아있지만 목록에서 접근이 사라집니다)")){ n.children.splice(ci,1); markDirty(); renderPanel(); } };
+        rowc.append(inp,up,dn,del); sub.appendChild(rowc);
+      });
+      const addC=document.createElement("button"); addC.className="mini"; addC.textContent="+ 게시판 추가"; addC.style.marginTop="2px";
+      addC.onclick=()=>{ if(!n.children)n.children=[]; n.children.push({id:"b_"+Date.now()+Math.floor(Math.random()*99999),label:"새 게시판"}); markDirty(); renderPanel(); };
+      sub.appendChild(addC); body.append(sub); return body; },
+  });
+  if(curTab==="notices") return renderList(p,{
+    title:"공지글 관리", desc:"사이드바 공지글 목록입니다.",
+    arr:data.notices, addLabel:"공지 추가",
+    make:()=>({t:"새 공지",d:"01-01"}), swatch:()=>null,
+    body:n=>{ const body=document.createElement("div"); const g=document.createElement("div"); g.className="grid"; g.style.gridTemplateColumns="1fr 120px";
+      g.append(field("제목",n.t,v=>{n.t=v;markDirty();}), field("날짜(예: 07-18)",n.d,v=>{n.d=v;markDirty();})); body.append(g); return body; },
+  });
+  if(curTab==="hot") return renderList(p,{
+    title:"인기글 관리", desc:"'이번 주 인기글' 목록입니다.",
+    arr:data.hot, addLabel:"인기글 추가",
+    make:()=>({t:"새 인기글",b:"여행 꿀팁",v:0}), swatch:()=>null,
+    body:h=>{ const body=document.createElement("div"); body.append(field("제목",h.t,v=>{h.t=v;markDirty();}));
+      const g2=document.createElement("div"); g2.className="grid g2"; g2.style.marginTop="9px";
+      g2.append(field("게시판",h.b,v=>{h.b=v;markDirty();}), field("조회수",h.v,v=>{h.v=v;markDirty();},"number")); body.append(g2); return body; },
+  });
+  if(curTab==="gallery") return renderList(p,{
+    title:"여행 사진첩 관리", desc:"이미지 업로드 또는 색상 카드로 표시됩니다.",
+    arr:data.gallery, addLabel:"사진 추가",
+    make:()=>({t:"새 사진",tag:"하노이",g:GRADS[0].v,img:""}),
+    swatch:x=>x.img?`background-image:url('${x.img}')`:`background:${x.g}`,
+    body:x=>{ const body=document.createElement("div"); const g=document.createElement("div"); g.className="grid g2";
+      g.append(field("설명",x.t,v=>{x.t=v;markDirty();}), field("지역 태그",x.tag,v=>{x.tag=v;markDirty();}));
+      const colF=document.createElement("div"); colF.className="fld"; colF.style.marginTop="9px"; colF.innerHTML=`<label>색상(이미지 없을 때)</label>`;
+      colF.appendChild(gradSelect(x.g,v=>{x.g=v;markDirty();renderPanel();}));
+      body.append(g,colF,imageControl(x,"640×400px (가로 4:3~16:10)")); return body; },
+  });
+  if(curTab==="settings") return renderSettings(p);
+}
+
+function renderList(p,cfg){
+  p.innerHTML="";
+  const panel=document.createElement("div"); panel.className="panel";
+  const head=document.createElement("div"); head.className="panel-head";
+  head.innerHTML=`<div><h2>${cfg.title}</h2><p>${cfg.desc}</p></div>`;
+  const add=document.createElement("button"); add.className="addbtn"; add.textContent="+ "+cfg.addLabel;
+  add.onclick=()=>{ cfg.arr.push(cfg.make()); markDirty(); renderPanel(); };
+  head.appendChild(add); panel.appendChild(head);
+  if(cfg.arr.length===0){ const e=document.createElement("p"); e.style.cssText="color:#9C9384;font-size:13px;padding:10px 0;"; e.textContent="항목이 없습니다. 위 버튼으로 추가하세요."; panel.appendChild(e); }
+  cfg.arr.forEach((item,i)=>{
+    const row=document.createElement("div"); row.className="row";
+    const top=document.createElement("div"); top.className="row-top";
+    const sw=cfg.swatch(item);
+    if(sw){ const s=document.createElement("div"); s.className="swatch"; s.style.cssText=sw; top.appendChild(s); }
+    const idx=document.createElement("span"); idx.className="row-idx"; idx.textContent="#"+(i+1); top.appendChild(idx);
+    top.appendChild(ctrlBtns(cfg.arr,i));
+    row.appendChild(top); row.appendChild(cfg.body(item)); panel.appendChild(row);
+  });
+  p.appendChild(panel);
+}
+
+function renderSite(p){
+  p.innerHTML="";
+  const panel=document.createElement("div"); panel.className="panel";
+  panel.innerHTML=`<div class="panel-head"><div><h2>제목 · 소개</h2><p>사이트 제목과 한 줄 소개를 직접 수정할 수 있습니다. 상단 로고 옆과 브라우저 탭에 표시됩니다.</p></div></div>`;
+  const wrap=document.createElement("div"); wrap.className="row";
+  wrap.appendChild(field("사이트 제목",data.siteTitle,v=>{data.siteTitle=v;markDirty();}));
+  const sub=field("한 줄 소개",data.siteSub,v=>{data.siteSub=v;markDirty();}); sub.style.marginTop="10px";
+  wrap.appendChild(sub);
+  panel.appendChild(wrap);
+  p.appendChild(panel);
+}
+
+function renderSettings(p){
+  p.innerHTML="";
+  const panel=document.createElement("div"); panel.className="panel";
+  panel.innerHTML=`<div class="panel-head"><div><h2>설정</h2><p>배너 회전, 관리자 비밀번호, 서버 연동을 관리합니다.</p></div></div>`;
+
+  const r1=document.createElement("div"); r1.className="set-row";
+  r1.innerHTML=`<div class="k">배너 자동 회전<small>켜면 일정 시간마다 배너 순서를 자동으로 섞습니다.</small></div>`;
+  const sw=document.createElement("label"); sw.className="switch";
+  const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!data.settings.autoRotate;
+  cb.onchange=()=>{ data.settings.autoRotate=cb.checked; markDirty(); };
+  const sl=document.createElement("span"); sl.className="slider"; sw.append(cb,sl); r1.appendChild(sw); panel.appendChild(r1);
+
+  const r2=document.createElement("div"); r2.className="set-row";
+  r2.innerHTML=`<div class="k">회전 간격(초)<small>몇 초마다 순서를 섞을지 정합니다.</small></div>`;
+  const num=document.createElement("input"); num.type="number"; num.className="num"; num.min="3"; num.value=data.settings.rotateSec;
+  num.oninput=()=>{ data.settings.rotateSec=+num.value||20; markDirty(); }; r2.appendChild(num); panel.appendChild(r2);
+
+  const r3=document.createElement("div"); r3.style.paddingTop="14px";
+  r3.innerHTML=`<div class="k" style="font-weight:700;font-size:14px;">관리자 비밀번호</div>
+    <p style="font-size:12.5px;color:var(--muted);margin:6px 0 0;">비밀번호는 <b>개발자만</b> 변경할 수 있습니다. 변경하려면 <b>admin.html</b> 상단의 <code>ADMIN_PW</code> 값을 코드에서 직접 수정하세요. (관리자 화면에서는 변경할 수 없습니다.)</p>`;
+  panel.appendChild(r3);
+
+  // 서버 연동 안내
+  const r4=document.createElement("div"); r4.style.paddingTop="14px";
+  r4.innerHTML=`<div class="k" style="font-weight:700;font-size:14px;">서버 연동 (Supabase)</div>
+    <p style="font-size:12.5px;color:var(--muted);margin:6px 0 0;">현재 상태: <b>${hasCloud?"연결됨 ☁️":"미연결 (이 브라우저 저장)"}</b><br>
+    무료 Supabase 프로젝트를 만들고 <b>config.js</b>에 URL·키를 넣은 뒤, SQL Editor에서 아래를 한 번 실행하세요. (설정·게시글·댓글 테이블을 모두 만듭니다)</p>
+    <div class="codebox">-- 1) 사이트 설정
+create table if not exists hg_site ( id int primary key, config jsonb );
+insert into hg_site (id, config) values (1, '{}'::jsonb) on conflict (id) do nothing;
+
+-- 2) 게시글 / 댓글
+create table if not exists hg_posts (
+  id uuid primary key default gen_random_uuid(),
+  board_id text not null, title text not null, body text not null,
+  author text, views int default 0, created_at timestamptz default now()
+);
+create table if not exists hg_comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid references hg_posts(id) on delete cascade,
+  author text, body text not null, created_at timestamptz default now()
+);
+create index if not exists hg_posts_board on hg_posts(board_id, created_at desc);
+create index if not exists hg_comments_post on hg_comments(post_id, created_at);
+
+-- 3) 접근 정책 (읽기: 누구나 / 글·댓글 쓰기: 누구나 / 사이트설정 쓰기: 로그인한 관리자만)
+alter table hg_site enable row level security;
+alter table hg_posts enable row level security;
+alter table hg_comments enable row level security;
+create policy "site read"    on hg_site     for select using (true);
+create policy "site write"   on hg_site     for all    using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "posts read"   on hg_posts    for select using (true);
+create policy "posts insert" on hg_posts    for insert with check (true);
+create policy "posts update" on hg_posts    for update using (true) with check (true);
+create policy "cmt read"     on hg_comments for select using (true);
+create policy "cmt insert"   on hg_comments for insert with check (true);</div>
+    <p style="font-size:11.5px;color:#9C9384;margin:8px 0 0;">※ 사이트 설정(배너·메뉴 등)은 <b>로그인한 관리자만</b> 저장할 수 있습니다. 게시글·댓글은 방문자가 쓸 수 있습니다.<br>
+    ※ 이미지 저장은 Supabase → <b>Storage</b>에서 <code>images</code> 버킷을 만들고 <b>Public</b>으로 설정하면, 관리자에서 업로드한 그림이 자동으로 그 버킷에 올라갑니다.</p>`;
+  panel.appendChild(r4);
+
+  p.appendChild(panel);
+}
+
+// 저장 / 되돌리기
+document.getElementById("saveBtn").onclick=async()=>{
+  const btn=document.getElementById("saveBtn"); btn.disabled=true; const old=btn.textContent; btn.textContent="저장 중…";
+  const res=await dbSave(data);
+  btn.disabled=false; btn.textContent=old;
+  if(res.ok){ dirty=false; updateDirty(); toast(res.cloud?"저장 완료 · 모든 방문자에게 반영됩니다.":"저장 완료 · 메인 페이지에 반영됩니다."); }
+  else if(res.noauth){ toast("관리자 인증이 필요합니다. 로그아웃 후 Supabase 관리자 계정으로 다시 로그인하세요."); }
+  else{ toast("서버 저장에 실패했습니다. 설정과 네트워크를 확인하세요."); }
+};
+document.getElementById("resetBtn").onclick=async()=>{
+  if(!confirm("모든 항목을 기본값으로 되돌립니다. 계속할까요?")) return;
+  data=clone(DEFAULTS); dirty=true; updateDirty(); renderPanel();
+  toast("기본값으로 되돌렸습니다. '변경사항 저장'을 눌러 반영하세요.");
+};
+window.addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+</script>
+</body>
+</html>
